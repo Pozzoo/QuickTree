@@ -77,21 +77,23 @@ public class WoodManager {
 
         Location location1 = location.clone();
 
-        while (!location1.getBlock().getType().equals(Material.AIR)) {
+        while (woods.contains(location1.getBlock().getType())) {
 
             for (int i = 0; i < coordsVector.size(); i++) {
-                if (isWoodenLogs(location1.getBlock().getType())) {
+                if (isWoodenLogs(location1.getBlock().getType()) && !treeModel.contains(location1)) {
                     addBlockLocation(location1.getBlock().getLocation());
+
+                    if (treeModel.size() <= 30) {
+                        checkAround(location1);
+                    }
                 }
                 location1.add(getCoordsVector(i));
             }
             location1.add(0, 1, 0);
         }
-
-        createTree();
     }
 
-    private void createTree() {
+    public void createTree() {
         for (Location location : treeModel) {
             BlockDisplay blockDisplay = location.getWorld().spawn(location, BlockDisplay.class);
             blockDisplay.setBlock(location.getBlock().getBlockData());
@@ -129,7 +131,7 @@ public class WoodManager {
                 }
                 iterations++;
 
-                if (iterations == 10) {
+                if (iterations >= 10) {
                     this.cancel();
                     explodeBlocks();
                 }
@@ -145,7 +147,7 @@ public class WoodManager {
 
                 for (BlockDisplay blockDisplay : treeDisplay) {
                     blockDisplay.remove();
-                    blockDisplay.getWorld().spawnParticle(Particle.BLOCK_CRACK, blockDisplay.getLocation(), 50, 1, 5, 0, Material.SPRUCE_LOG.createBlockData());
+                    blockDisplay.getWorld().spawnParticle(Particle.BLOCK_CRACK, blockDisplay.getLocation(), 20, 1, 5, 0, Material.SPRUCE_LOG.createBlockData());
 
                 }
                 treeDisplay.clear();
