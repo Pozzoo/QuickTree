@@ -15,12 +15,15 @@ public class WoodManager {
     private final Set<Location> treeModel;
     private final List<BlockDisplay> treeDisplay;
     private final List<Vector> coordsVector;
+    private final Random random;
 
     public WoodManager() {
         this.treeModel = new HashSet<>();
         this.coordsVector = new ArrayList<>();
         this.woods = new ArrayList<>();
         this.treeDisplay = new ArrayList<>();
+
+        random = new Random();
 
         warmupWoods();
         warmupCoords();
@@ -101,10 +104,10 @@ public class WoodManager {
             this.treeDisplay.add(blockDisplay);
         }
 
-        animateTree();
+        animateTree(random.nextInt(4));
     }
 
-    private void animateTree() {
+    private void animateTree(int direction) {
         new BukkitRunnable() {
             int iterations = 0;
 
@@ -122,16 +125,38 @@ public class WoodManager {
 
                     Transformation transformation = blockDisplay.getTransformation();
 
-                    transformation.getLeftRotation().rotateZ((float) Math.toRadians((double) 90 / 10));
+                    switch (direction) {
+                        case 0 -> {
+                            transformation.getLeftRotation().rotateZ((float) Math.toRadians((double) 90 / 15));
 
-                    transformation.getTranslation().x -= (float) (height - 1) / 10;
-                    transformation.getTranslation().y -= (float) (height - 1) / 10;
+                            transformation.getTranslation().x -= (float) (height - 1) / 15;
+                            transformation.getTranslation().y -= (float) (height - 1) / 15;
+                        }
+                        case 1 -> {
+                            transformation.getLeftRotation().rotateX((float) -Math.toRadians((double) 90 / 15));
+
+                            transformation.getTranslation().z -= (float) (height - 1) / 15;
+                            transformation.getTranslation().y -= (float) (height - 1) / 15;
+                        }
+                        case 2 -> {
+                            transformation.getLeftRotation().rotateZ(-(float) Math.toRadians((double) 90 / 15));
+
+                            transformation.getTranslation().x += (float) (height) / 15;
+                            transformation.getTranslation().y -= (float) (height - 2) / 15;
+                        }
+                        case 3 -> {
+                            transformation.getLeftRotation().rotateX((float) Math.toRadians((double) 90 / 15));
+
+                            transformation.getTranslation().z += (float) (height) / 15;
+                            transformation.getTranslation().y -= (float) (height - 2) / 15;
+                        }
+                    }
 
                     blockDisplay.setTransformation(transformation);
                 }
                 iterations++;
 
-                if (iterations >= 10) {
+                if (iterations >= 15) {
                     this.cancel();
                     explodeBlocks();
                 }
