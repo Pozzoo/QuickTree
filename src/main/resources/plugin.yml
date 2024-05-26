@@ -1,0 +1,4 @@
+name: QuickTree
+version: '${project.version}'
+main: fun.pozzoo.quicktree.QuickTree
+api-version: '1.20'
