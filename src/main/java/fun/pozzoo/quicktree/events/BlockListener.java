@@ -1,6 +1,7 @@
 package fun.pozzoo.quicktree.events;
 
 import fun.pozzoo.quicktree.QuickTree;
+import fun.pozzoo.quicktree.utils.WoodUtils;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,7 +17,7 @@ public class BlockListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!(QuickTree.getInstance().getWoodManager().isWoodenLogs(event.getBlock().getType()))) return;
+        if (!(WoodUtils.isWoodenLogs(event.getBlock().getType()))) return;
         if (event.getPlayer().isSneaking()) return;
 
         event.setCancelled(true);

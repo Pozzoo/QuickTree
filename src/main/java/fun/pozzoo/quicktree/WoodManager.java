@@ -2,6 +2,7 @@ package fun.pozzoo.quicktree;
 
 import fun.pozzoo.quicktree.data.Tree;
 import fun.pozzoo.quicktree.utils.ParticleUtils;
+import fun.pozzoo.quicktree.utils.WoodUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.BlockDisplay;
@@ -13,33 +14,17 @@ import java.util.*;
 
 
 public class WoodManager {
-    private final List<Material> woods;
     private final Map<Location, Tree> trees;
     private final List<Vector> coordsVector;
     private final Random random;
 
     public WoodManager() {
-        woods = new ArrayList<>();
         trees = new HashMap<>();
         coordsVector = new ArrayList<>();
 
         random = new Random();
 
-        warmupWoods();
         warmupCoords();
-    }
-
-    private void warmupWoods() {
-        this.woods.add(Material.ACACIA_LOG);
-        this.woods.add(Material.BIRCH_LOG);
-        this.woods.add(Material.CHERRY_LOG);
-        this.woods.add(Material.JUNGLE_LOG);
-        this.woods.add(Material.DARK_OAK_LOG);
-        this.woods.add(Material.MANGROVE_LOG);
-        this.woods.add(Material.OAK_LOG);
-        this.woods.add(Material.SPRUCE_LOG);
-        this.woods.add(Material.CRIMSON_STEM);
-        this.woods.add(Material.WARPED_STEM);
     }
 
     private void warmupCoords() {
@@ -52,10 +37,6 @@ public class WoodManager {
         coordsVector.add(new Vector(1, 0, 0));
         coordsVector.add(new Vector(1, 0, 0));
         coordsVector.add(new Vector(-1, 0, 1));
-    }
-
-    public boolean isWoodenLogs(Material material) {
-        return this.woods.contains(material);
     }
 
     public Vector getCoordsVector(int i) {
@@ -80,10 +61,10 @@ public class WoodManager {
 
         Location location1 = target.clone();
 
-        while (woods.contains(location1.getBlock().getType())) {
+        while (WoodUtils.isWoodenLogs(location1.getBlock().getType())) {
 
             for (int i = 0; i < coordsVector.size(); i++) {
-                if (isWoodenLogs(location1.getBlock().getType()) && (!trees.get(initialLocation).getTreeModel().contains(location1))) {
+                if (WoodUtils.isWoodenLogs(location1.getBlock().getType()) && (!trees.get(initialLocation).getTreeModel().contains(location1))) {
                     trees.get(initialLocation).getTreeModel().add(location1.clone());
 
                     if (trees.get(initialLocation).getTreeModel().size() <= 30) {
