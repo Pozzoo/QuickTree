@@ -11,19 +11,33 @@ import java.util.Set;
 public class Tree {
     private final Set<Location> treeModel;
     private final List<BlockDisplay> treeDisplay;
+    private final Set<Location> leaves;
 
-    public Tree(Location location) {
+    public Tree() {
         treeModel = new HashSet<>();
         treeDisplay = new ArrayList<>();
-
-        treeModel.add(location);
+        leaves = new HashSet<>();
     }
 
     public Set<Location> getTreeModel() {
         return treeModel;
     }
 
+    public void setTreeModel(Set<Location> treeModel) {
+        this.treeModel.clear();
+        this.treeModel.addAll(treeModel);
+    }
+
     public List<BlockDisplay> getTreeDisplay() {
         return treeDisplay;
+    }
+
+    public Set<Location> getLeaves() {
+        return leaves;
+    }
+
+    public void setLeaves(Set<Location> leaves) {
+        this.leaves.clear();
+        this.leaves.addAll(leaves);
     }
 }

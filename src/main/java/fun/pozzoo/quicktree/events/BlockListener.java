@@ -1,7 +1,7 @@
 package fun.pozzoo.quicktree.events;
 
 import fun.pozzoo.quicktree.QuickTree;
-import fun.pozzoo.quicktree.utils.WoodUtils;
+import fun.pozzoo.quicktree.utils.BlockTypeUtils;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,14 +18,14 @@ public class BlockListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (!WoodUtils.isWoodenLogs(event.getBlock().getType())) return;
+        if (!BlockTypeUtils.isWoodenLogs(event.getBlock().getType())) return;
         QuickTree.getInstance().getStorageManager().mark(event.getBlock());
     }
 
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!(WoodUtils.isWoodenLogs(event.getBlock().getType()))) return;
+        if (!(BlockTypeUtils.isWoodenLogs(event.getBlock().getType()))) return;
         if (event.getPlayer().isSneaking()) return;
 
         if (QuickTree.getInstance().getStorageManager().isPlayerPlaced(event.getBlock())) {

@@ -3,9 +3,11 @@ package fun.pozzoo.quicktree.managers;
 import fun.pozzoo.quicktree.QuickTree;
 import fun.pozzoo.quicktree.data.Tree;
 import fun.pozzoo.quicktree.utils.ParticleUtils;
-import fun.pozzoo.quicktree.utils.WoodUtils;
+import fun.pozzoo.quicktree.utils.BlockTypeUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.block.data.type.Leaves;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Transformation;
@@ -16,32 +18,24 @@ import java.util.*;
 
 public class WoodManager {
     private final Map<Location, Tree> trees;
-    private final List<Vector> coordsVector;
     private final Random random;
+
+    private static final int[][] DIRECTIONS = {
+            {-1,-1,-1},{-1,-1,0},{-1,-1,1},
+            {-1, 0,-1},{-1, 0,0},{-1, 0,1},
+            {-1, 1,-1},{-1, 1,0},{-1, 1,1},
+            { 0,-1,-1},{ 0,-1,0},{ 0,-1,1},
+            { 0, 0,-1},          { 0, 0,1},
+            { 0, 1,-1},{ 0, 1,0},{ 0, 1,1},
+            { 1,-1,-1},{ 1,-1,0},{ 1,-1,1},
+            { 1, 0,-1},{ 1, 0,0},{ 1, 0,1},
+            { 1, 1,-1},{ 1, 1,0},{ 1, 1,1}
+    };
+
 
     public WoodManager() {
         trees = new HashMap<>();
-        coordsVector = new ArrayList<>();
-
         random = new Random();
-
-        warmupCoords();
-    }
-
-    private void warmupCoords() {
-        coordsVector.add(new Vector(1, 0, 0));
-        coordsVector.add(new Vector(0, 0, 1));
-        coordsVector.add(new Vector(-1, 0, 0));
-        coordsVector.add(new Vector(-1, 0, 0));
-        coordsVector.add(new Vector(0, 0, -1));
-        coordsVector.add(new Vector(0, 0, -1));
-        coordsVector.add(new Vector(1, 0, 0));
-        coordsVector.add(new Vector(1, 0, 0));
-        coordsVector.add(new Vector(-1, 0, 1));
-    }
-
-    public Vector getCoordsVector(int i) {
-        return coordsVector.get(i);
     }
 
     public void destroyTree(Location initialLocation) {
@@ -50,48 +44,88 @@ public class WoodManager {
         }
 
         trees.get(initialLocation).getTreeModel().clear();
+        animateTree(random.nextInt(4), initialLocation);
     }
 
     public void createTree(Location location) {
-        trees.put(location, new Tree(location));
+        Tree tree = new Tree();
+        Set<Location> logs = searchForLogs(location);
 
-        checkAround(location, location);
+        tree.setTreeModel(logs);
+        tree.setLeaves(searchForLeaves(logs));
+
+        trees.put(location, tree);
     }
 
-    public void checkAround(Location initialLocation, Location target) {
+    public Set<Location> searchForLogs(Location start) {
+        Set<Location> logs = new HashSet<>();
+        Queue<Location> queue = new ArrayDeque<>();
 
-        Location location1 = target.clone();
+        queue.add(start);
+        logs.add(start);
 
-        while (WoodUtils.isWoodenLogs(location1.getBlock().getType())) {
+        while (!queue.isEmpty()) {
+            Location current = queue.poll();
 
-            for (int i = 0; i < coordsVector.size(); i++) {
-                if (WoodUtils.isWoodenLogs(location1.getBlock().getType()) && (!trees.get(initialLocation).getTreeModel().contains(location1))) {
-                    trees.get(initialLocation).getTreeModel().add(location1.clone());
+            for (int[] d : DIRECTIONS) {
+                Location next = current.getBlock().getRelative(d[0], d[1], d[2]).getLocation();
 
-                    if (trees.get(initialLocation).getTreeModel().size() <= 30) {
-                        checkAround(initialLocation, target);
+                if (!BlockTypeUtils.isWoodenLogs(next.getBlock().getType())) continue;
+                if (logs.contains(next)) continue;
+
+                // Structure protection
+                if (QuickTree.getInstance().getStorageManager().isPlayerPlaced(next.getBlock())) {
+                    return Set.of(); // abort entire felling
+                }
+
+                logs.add(next);
+                queue.add(next);
+            }
+
+            if (logs.size() > 512) break; // safety cap
+        }
+
+        return logs;
+    }
+
+    public Set<Location> searchForLeaves(Set<Location> logs) {
+        Set<Location> leaves = new HashSet<>();
+
+        for (Location log : logs) {
+            for (int dx = -4; dx <= 4; dx++) {
+                for (int dy = -4; dy <= 4; dy++) {
+                    for (int dz = -4; dz <= 4; dz++) {
+                        Location b = log.getBlock().getRelative(dx, dy, dz).getLocation();
+
+                        if (!BlockTypeUtils.isLeaves(b.getBlock().getType())) continue;
+
+                        Leaves data = (Leaves) b.getBlock().getBlockData();
+                        if (data.isPersistent()) continue;
+                        if (data.getDistance() > 6) continue;
+
+                        leaves.add(b);
                     }
                 }
-                location1.add(getCoordsVector(i));
             }
-            location1.add(0, 1, 0);
         }
+        return leaves;
     }
 
-    public void createTreeDisplay(Location initalLocation) {
-        Tree tree = trees.get(initalLocation);
+
+    public void createTreeDisplay(Location initialLocation) {
+        Tree tree = trees.get(initialLocation);
 
         for (Location location : tree.getTreeModel()) {
             BlockDisplay blockDisplay = location.getWorld().spawn(location, BlockDisplay.class);
             blockDisplay.setBlock(location.getBlock().getBlockData());
 
-            trees.get(initalLocation).getTreeDisplay().add(blockDisplay);
+            trees.get(initialLocation).getTreeDisplay().add(blockDisplay);
         }
-
-        animateTree(random.nextInt(4), initalLocation);
     }
 
     private void animateTree(int direction, Location location) {
+        explodeLeaves(location);
+
         new BukkitRunnable() {
             int iterations = 0;
 
@@ -162,6 +196,19 @@ public class WoodManager {
                 trees.get(location).getTreeDisplay().clear();
             }
         }.runTaskLater(QuickTree.getInstance(), 20);
+    }
+
+    private void explodeLeaves(Location location) {
+        Set<Location> leaves = trees.get(location).getLeaves();
+
+        if (!leaves.isEmpty()) {
+            Sound sound = leaves.iterator().next().getBlock().getBlockSoundGroup().getBreakSound();
+            location.getWorld().playSound(location, sound, 1.3f, 0.8f);
+        }
+
+        for (Location loc : trees.get(location).getLeaves()) {
+            loc.getBlock().breakNaturally();
+        }
     }
 
     public Tree getTree(Location location) {
