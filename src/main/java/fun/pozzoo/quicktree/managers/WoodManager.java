@@ -20,6 +20,8 @@ public class WoodManager {
     private final Map<Location, Tree> trees;
     private final Random random;
 
+    private record BlockDepth(Location location, int depth) {}
+
     private static final int[][] DIRECTIONS = {
             {-1,-1,-1},{-1,-1,0},{-1,-1,1},
             {-1, 0,-1},{-1, 0,0},{-1, 0,1},
@@ -49,15 +51,15 @@ public class WoodManager {
 
     public void createTree(Location location) {
         Tree tree = new Tree();
-        Set<Location> logs = searchForLogs(location);
+        Set<Location> logs = searchLogs(location);
 
         tree.setTreeModel(logs);
-        tree.setLeaves(searchForLeaves(logs));
+        tree.setLeaves(searchLeavesFromLogs(logs));
 
         trees.put(location, tree);
     }
 
-    public Set<Location> searchForLogs(Location start) {
+    public Set<Location> searchLogs(Location start) {
         Set<Location> logs = new HashSet<>();
         Queue<Location> queue = new ArrayDeque<>();
 
@@ -88,23 +90,32 @@ public class WoodManager {
         return logs;
     }
 
-    public Set<Location> searchForLeaves(Set<Location> logs) {
+    public Set<Location> searchLeavesFromLogs(Set<Location> logs) {
         Set<Location> leaves = new HashSet<>();
+        Set<Location> visited = new HashSet<>();
+        Queue<BlockDepth> queue = new ArrayDeque<>();
 
+        // Seed BFS with logs
         for (Location log : logs) {
-            for (int dx = -4; dx <= 4; dx++) {
-                for (int dy = -4; dy <= 4; dy++) {
-                    for (int dz = -4; dz <= 4; dz++) {
-                        Location b = log.getBlock().getRelative(dx, dy, dz).getLocation();
+            queue.add(new BlockDepth(log, 0));
+            visited.add(log);
+        }
 
-                        if (!BlockTypeUtils.isLeaves(b.getBlock().getType())) continue;
+        while (!queue.isEmpty()) {
+            BlockDepth current = queue.poll();
 
-                        Leaves data = (Leaves) b.getBlock().getBlockData();
-                        if (data.isPersistent()) continue;
-                        if (data.getDistance() > 6) continue;
+            if (current.depth >= 4) continue;
 
-                        leaves.add(b);
-                    }
+            for (int[] d : DIRECTIONS) {
+                Location next = current.location.getBlock().getRelative(d[0], d[1], d[2]).getLocation();
+                if (!visited.add(next)) continue;
+
+                if (BlockTypeUtils.isLeaves(next.getBlock().getType())) {
+                    Leaves data = (Leaves) next.getBlock().getBlockData();
+                    if (data.isPersistent()) continue;
+
+                    leaves.add(next);
+                    queue.add(new BlockDepth(next, current.depth + 1));
                 }
             }
         }
