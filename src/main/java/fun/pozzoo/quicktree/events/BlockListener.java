@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 
@@ -15,10 +16,22 @@ public class BlockListener implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (!WoodUtils.isWoodenLogs(event.getBlock().getType())) return;
+        QuickTree.getInstance().getStorageManager().mark(event.getBlock());
+    }
+
+
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if (!(WoodUtils.isWoodenLogs(event.getBlock().getType()))) return;
         if (event.getPlayer().isSneaking()) return;
+
+        if (QuickTree.getInstance().getStorageManager().isPlayerPlaced(event.getBlock())) {
+            QuickTree.getInstance().getStorageManager().unmark(event.getBlock());
+            return;
+        }
 
         event.setCancelled(true);
 

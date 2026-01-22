@@ -1,5 +1,6 @@
-package fun.pozzoo.quicktree;
+package fun.pozzoo.quicktree.managers;
 
+import fun.pozzoo.quicktree.QuickTree;
 import fun.pozzoo.quicktree.data.Tree;
 import fun.pozzoo.quicktree.utils.ParticleUtils;
 import fun.pozzoo.quicktree.utils.WoodUtils;

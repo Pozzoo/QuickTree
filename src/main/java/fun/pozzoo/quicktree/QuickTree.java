@@ -1,11 +1,14 @@
 package fun.pozzoo.quicktree;
 
 import fun.pozzoo.quicktree.events.BlockListener;
+import fun.pozzoo.quicktree.managers.StorageManager;
+import fun.pozzoo.quicktree.managers.WoodManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class QuickTree extends JavaPlugin {
     private static QuickTree instance;
     private WoodManager woodManager;
+    private StorageManager storageManager;
     private Metrics metrics;
 
     @Override
@@ -13,6 +16,7 @@ public final class QuickTree extends JavaPlugin {
         // Plugin startup logic
         instance = this;
         woodManager = new WoodManager();
+        storageManager = new StorageManager(instance);
         metrics = new Metrics(instance, 22027);
         new BlockListener(instance);
     }
@@ -29,5 +33,9 @@ public final class QuickTree extends JavaPlugin {
 
     public WoodManager getWoodManager() {
         return woodManager;
+    }
+
+    public StorageManager getStorageManager() {
+        return storageManager;
     }
 }
