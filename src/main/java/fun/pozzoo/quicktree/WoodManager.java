@@ -1,9 +1,9 @@
 package fun.pozzoo.quicktree;
 
 import fun.pozzoo.quicktree.data.Tree;
+import fun.pozzoo.quicktree.utils.ParticleUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Transformation;
@@ -174,7 +174,7 @@ public class WoodManager {
 
                 for (BlockDisplay blockDisplay : trees.get(location).getTreeDisplay()) {
                     blockDisplay.remove();
-                    blockDisplay.getWorld().spawnParticle(Particle.BLOCK, blockDisplay.getLocation(), 20, 1, 5, 0, Material.SPRUCE_LOG.createBlockData());
+                    blockDisplay.getWorld().spawnParticle(ParticleUtils.getBlockParticle(), (blockDisplay.getLocation().add(Vector.fromJOML(blockDisplay.getTransformation().getTranslation()))), 20, 0, 1, 0, blockDisplay.getBlock().getMaterial().createBlockData());
 
                 }
                 trees.get(location).getTreeDisplay().clear();
