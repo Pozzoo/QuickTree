@@ -23,13 +23,10 @@ public class WoodManager {
     private record BlockDepth(Location location, int depth) {}
 
     private static final int[][] DIRECTIONS = {
-            {-1,-1,-1},{-1,-1,0},{-1,-1,1},
             {-1, 0,-1},{-1, 0,0},{-1, 0,1},
             {-1, 1,-1},{-1, 1,0},{-1, 1,1},
-            { 0,-1,-1},{ 0,-1,0},{ 0,-1,1},
             { 0, 0,-1},          { 0, 0,1},
             { 0, 1,-1},{ 0, 1,0},{ 0, 1,1},
-            { 1,-1,-1},{ 1,-1,0},{ 1,-1,1},
             { 1, 0,-1},{ 1, 0,0},{ 1, 0,1},
             { 1, 1,-1},{ 1, 1,0},{ 1, 1,1}
     };
@@ -114,6 +111,9 @@ public class WoodManager {
                     Leaves data = (Leaves) next.getBlock().getBlockData();
                     if (data.isPersistent()) continue;
 
+                    leaves.add(next);
+                    queue.add(new BlockDepth(next, current.depth + 1));
+                } else if (BlockTypeUtils.isKindaLeaves(next.getBlock().getType())) {
                     leaves.add(next);
                     queue.add(new BlockDepth(next, current.depth + 1));
                 }

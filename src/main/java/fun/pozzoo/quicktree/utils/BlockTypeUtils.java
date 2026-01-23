@@ -10,8 +10,11 @@ public class BlockTypeUtils {
     }
 
     public static boolean isLeaves(Material material) {
-        return material.name().contains("_LEAVES")
-                || material.name().contains("_MUSHROOM_BLOCK")
+        return material.name().contains("_LEAVES");
+    }
+
+    public static boolean isKindaLeaves(Material material) {
+        return material.name().contains("_MUSHROOM_BLOCK")
                 || material.name().contains("_WART_BLOCK");
     }
 }

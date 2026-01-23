@@ -18,8 +18,8 @@ public class BlockListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (!BlockTypeUtils.isWoodenLogs(event.getBlock().getType())) return;
-        QuickTree.getInstance().getStorageManager().mark(event.getBlock());
+        if (BlockTypeUtils.isWoodenLogs(event.getBlock().getType()) || BlockTypeUtils.isKindaLeaves(event.getBlock().getType()))
+            QuickTree.getInstance().getStorageManager().mark(event.getBlock());
     }
 
 
