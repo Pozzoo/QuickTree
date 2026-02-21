@@ -137,8 +137,12 @@ public class WoodManager {
     private void animateTree(int direction, Location location, Vector playerDirection) {
         explodeLeaves(location);
 
-        int playerDirectionInt = (playerDirection.getX() == 0) ? (playerDirection.getY() == -1 ? 0 : 2) : (playerDirection.getX() == 1 ? 1 : 3);
-        int finalDirection = (direction % 2 == 0) ? (direction + 1 == playerDirectionInt ? direction + 1 : direction) : (direction - 1 == playerDirectionInt ? direction - 1 : direction);
+        int playerDirectionInt = ((Math.round(playerDirection.getX())) == 0) ? (Math.round(playerDirection.getZ()) == -1 ? 0 : 1) : (Math.round(playerDirection.getX()) == 1 ? 2 : 3);
+        int finalDirection = (direction % 2 == 0) ? (direction + 1 == playerDirectionInt ? (direction - 1) & 3 : direction) : (direction - 1 == playerDirectionInt ? (direction + 1) & 3 : direction);
+
+        System.out.println(direction);
+        System.out.println(playerDirectionInt);
+        System.out.println(finalDirection);
 
         new BukkitRunnable() {
             int iterations = 0;
@@ -158,25 +162,25 @@ public class WoodManager {
                     Transformation transformation = blockDisplay.getTransformation();
 
                     switch (finalDirection) {
-                        case 0 -> {
+                        case 0 -> { //North
                             transformation.getLeftRotation().rotateX((float) -Math.toRadians((double) 90 / 15));
 
                             transformation.getTranslation().z -= (float) (height - 1) / 15;
                             transformation.getTranslation().y -= (float) (height - 1) / 15;
                         }
-                        case 1 -> {
+                        case 1 -> { //South
                             transformation.getLeftRotation().rotateX((float) Math.toRadians((double) 90 / 15));
 
                             transformation.getTranslation().z += (float) (height) / 15;
                             transformation.getTranslation().y -= (float) (height - 2) / 15;
                         }
-                        case 2 -> {
+                        case 2 -> { //East
                             transformation.getLeftRotation().rotateZ((float) -Math.toRadians((double) 90 / 15));
 
                             transformation.getTranslation().x += (float) (height) / 15;
                             transformation.getTranslation().y -= (float) (height - 2) / 15;
                         }
-                        case 3 -> {
+                        case 3 -> { //West
                             transformation.getLeftRotation().rotateZ((float) Math.toRadians((double) 90 / 15));
 
                             transformation.getTranslation().x -= (float) (height - 1) / 15;
