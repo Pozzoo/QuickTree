@@ -37,13 +37,13 @@ public class WoodManager {
         random = new Random();
     }
 
-    public void destroyTree(Location initialLocation) {
+    public void destroyTree(Location initialLocation, Vector playerDirection) {
         for (Location location : trees.get(initialLocation).getTreeModel()) {
             location.getBlock().breakNaturally(true);
         }
 
         trees.get(initialLocation).getTreeModel().clear();
-        animateTree(random.nextInt(4), initialLocation);
+        animateTree(random.nextInt(4), initialLocation, playerDirection);
     }
 
     public void createTree(Location location) {
@@ -134,8 +134,11 @@ public class WoodManager {
         }
     }
 
-    private void animateTree(int direction, Location location) {
+    private void animateTree(int direction, Location location, Vector playerDirection) {
         explodeLeaves(location);
+
+        int playerDirectionInt = (playerDirection.getX() == 0) ? (playerDirection.getY() == -1 ? 0 : 2) : (playerDirection.getX() == 1 ? 1 : 3);
+        int finalDirection = (direction % 2 == 0) ? (direction + 1 == playerDirectionInt ? direction + 1 : direction) : (direction - 1 == playerDirectionInt ? direction - 1 : direction);
 
         new BukkitRunnable() {
             int iterations = 0;
@@ -154,30 +157,30 @@ public class WoodManager {
 
                     Transformation transformation = blockDisplay.getTransformation();
 
-                    switch (direction) {
+                    switch (finalDirection) {
                         case 0 -> {
-                            transformation.getLeftRotation().rotateZ((float) Math.toRadians((double) 90 / 15));
-
-                            transformation.getTranslation().x -= (float) (height - 1) / 15;
-                            transformation.getTranslation().y -= (float) (height - 1) / 15;
-                        }
-                        case 1 -> {
                             transformation.getLeftRotation().rotateX((float) -Math.toRadians((double) 90 / 15));
 
                             transformation.getTranslation().z -= (float) (height - 1) / 15;
                             transformation.getTranslation().y -= (float) (height - 1) / 15;
                         }
+                        case 1 -> {
+                            transformation.getLeftRotation().rotateX((float) Math.toRadians((double) 90 / 15));
+
+                            transformation.getTranslation().z += (float) (height) / 15;
+                            transformation.getTranslation().y -= (float) (height - 2) / 15;
+                        }
                         case 2 -> {
-                            transformation.getLeftRotation().rotateZ(-(float) Math.toRadians((double) 90 / 15));
+                            transformation.getLeftRotation().rotateZ((float) -Math.toRadians((double) 90 / 15));
 
                             transformation.getTranslation().x += (float) (height) / 15;
                             transformation.getTranslation().y -= (float) (height - 2) / 15;
                         }
                         case 3 -> {
-                            transformation.getLeftRotation().rotateX((float) Math.toRadians((double) 90 / 15));
+                            transformation.getLeftRotation().rotateZ((float) Math.toRadians((double) 90 / 15));
 
-                            transformation.getTranslation().z += (float) (height) / 15;
-                            transformation.getTranslation().y -= (float) (height - 2) / 15;
+                            transformation.getTranslation().x -= (float) (height - 1) / 15;
+                            transformation.getTranslation().y -= (float) (height - 1) / 15;
                         }
                     }
 

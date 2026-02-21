@@ -41,6 +41,6 @@ public class BlockListener implements Listener {
         QuickTree.getInstance().getWoodManager().createTreeDisplay(location);
 
         event.getPlayer().damageItemStack(EquipmentSlot.HAND, QuickTree.getInstance().getWoodManager().getTree(location).getTreeModel().size());
-        QuickTree.getInstance().getWoodManager().destroyTree(location);
+        QuickTree.getInstance().getWoodManager().destroyTree(location, event.getPlayer().getLocation().getDirection());
     }
 }
