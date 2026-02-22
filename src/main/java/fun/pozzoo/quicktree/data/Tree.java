@@ -3,27 +3,24 @@ package fun.pozzoo.quicktree.data;
 import org.bukkit.Location;
 import org.bukkit.entity.BlockDisplay;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Tree {
-    private final Set<Location> treeModel;
+    private final LinkedList<Location> treeModel;
     private final List<BlockDisplay> treeDisplay;
-    private final Set<Location> leaves;
+    private final LinkedList<Location> leaves;
 
     public Tree() {
-        treeModel = new HashSet<>();
+        treeModel = new LinkedList<>();
         treeDisplay = new ArrayList<>();
-        leaves = new HashSet<>();
+        leaves = new LinkedList<>();
     }
 
-    public Set<Location> getTreeModel() {
+    public LinkedList<Location> getTreeModel() {
         return treeModel;
     }
 
-    public void setTreeModel(Set<Location> treeModel) {
+    public void setTreeModel(LinkedList<Location> treeModel) {
         this.treeModel.clear();
         this.treeModel.addAll(treeModel);
     }
@@ -32,11 +29,11 @@ public class Tree {
         return treeDisplay;
     }
 
-    public Set<Location> getLeaves() {
+    public LinkedList<Location> getLeaves() {
         return leaves;
     }
 
-    public void setLeaves(Set<Location> leaves) {
+    public void setLeaves(LinkedList<Location> leaves) {
         this.leaves.clear();
         this.leaves.addAll(leaves);
     }

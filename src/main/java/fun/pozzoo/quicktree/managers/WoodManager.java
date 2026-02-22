@@ -24,10 +24,11 @@ public class WoodManager {
 
     private static final int[][] DIRECTIONS = {
             {-1, 0,-1},{-1, 0,0},{-1, 0,1},
-            {-1, 1,-1},{-1, 1,0},{-1, 1,1},
             { 0, 0,-1},          { 0, 0,1},
-            { 0, 1,-1},{ 0, 1,0},{ 0, 1,1},
             { 1, 0,-1},{ 1, 0,0},{ 1, 0,1},
+
+            {-1, 1,-1},{-1, 1,0},{-1, 1,1},
+            { 0, 1,-1},{ 0, 1,0},{ 0, 1,1},
             { 1, 1,-1},{ 1, 1,0},{ 1, 1,1}
     };
 
@@ -48,7 +49,7 @@ public class WoodManager {
 
     public void createTree(Location location) {
         Tree tree = new Tree();
-        Set<Location> logs = searchLogs(location);
+        LinkedList<Location> logs = searchLogs(location);
 
         tree.setTreeModel(logs);
         tree.setLeaves(searchLeavesFromLogs(logs));
@@ -56,8 +57,8 @@ public class WoodManager {
         trees.put(location, tree);
     }
 
-    public Set<Location> searchLogs(Location start) {
-        Set<Location> logs = new HashSet<>();
+    public LinkedList<Location> searchLogs(Location start) {
+        LinkedList<Location> logs = new LinkedList<>();
         Queue<Location> queue = new ArrayDeque<>();
 
         queue.add(start);
@@ -74,11 +75,20 @@ public class WoodManager {
 
                 // Structure protection
                 if (QuickTree.getInstance().getStorageManager().isPlayerPlaced(next.getBlock())) {
-                    return Set.of(); // abort entire felling
+                    return new LinkedList<>(); // abort entire felling
                 }
 
                 logs.add(next);
                 queue.add(next);
+            }
+
+            // Prevent from animating "Trees" that are 1 block tall
+            if (logs.getFirst().getY() == logs.getLast().getY()) {
+                for (Location log : logs) {
+                    log.getBlock().breakNaturally();
+                }
+
+                break;
             }
 
             if (logs.size() > 512) break; // safety cap
@@ -87,9 +97,9 @@ public class WoodManager {
         return logs;
     }
 
-    public Set<Location> searchLeavesFromLogs(Set<Location> logs) {
-        Set<Location> leaves = new HashSet<>();
-        Set<Location> visited = new HashSet<>();
+    public LinkedList<Location> searchLeavesFromLogs(LinkedList<Location> logs) {
+        LinkedList<Location> leaves = new LinkedList<>();
+        LinkedList<Location> visited = new LinkedList<>();
         Queue<BlockDepth> queue = new ArrayDeque<>();
 
         // Seed BFS with logs
@@ -139,10 +149,6 @@ public class WoodManager {
 
         int playerDirectionInt = ((Math.round(playerDirection.getX())) == 0) ? (Math.round(playerDirection.getZ()) == -1 ? 0 : 1) : (Math.round(playerDirection.getX()) == 1 ? 2 : 3);
         int finalDirection = (direction % 2 == 0) ? (direction + 1 == playerDirectionInt ? (direction - 1) & 3 : direction) : (direction - 1 == playerDirectionInt ? (direction + 1) & 3 : direction);
-
-        System.out.println(direction);
-        System.out.println(playerDirectionInt);
-        System.out.println(finalDirection);
 
         new BukkitRunnable() {
             int iterations = 0;
@@ -217,7 +223,7 @@ public class WoodManager {
     }
 
     private void explodeLeaves(Location location) {
-        Set<Location> leaves = trees.get(location).getLeaves();
+        LinkedList<Location> leaves = trees.get(location).getLeaves();
 
         if (!leaves.isEmpty()) {
             Sound sound = leaves.iterator().next().getBlock().getBlockSoundGroup().getBreakSound();
