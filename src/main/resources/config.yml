@@ -1,0 +1,10 @@
+animation:
+  # Minimum amount of ticks the falling animation takes.
+  base-fall-ticks: 10
+
+  # Extra ticks added per block of tree height.
+  # Higher value = taller trees fall slower.
+  ticks-per-tree-block: 1
+
+  # Maximum animation duration, so huge trees do not animate forever.
+  max-fall-ticks: 60

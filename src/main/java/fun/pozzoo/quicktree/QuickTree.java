@@ -15,6 +15,8 @@ public final class QuickTree extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
         instance = this;
+        saveDefaultConfig();
+
         woodManager = new WoodManager();
         storageManager = new StorageManager(instance);
         metrics = new Metrics(instance, 22027);

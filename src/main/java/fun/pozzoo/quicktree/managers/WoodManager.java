@@ -17,9 +17,6 @@ import java.util.*;
 
 
 public class WoodManager {
-    private static final int BASE_FALL_TICKS = 10;
-    private static final int TICKS_PER_TREE_BLOCK = 1;
-    private static final int MAX_FALL_TICKS = 60;
     private static final int TERRAIN_SCAN_UP = 4;
     private static final int TERRAIN_SCAN_DOWN = 16;
 
@@ -438,7 +435,13 @@ public class WoodManager {
 
     private int getFallAnimationTicks(Tree tree) {
         int treeHeight = getTreeHeight(tree);
-        return Math.min(MAX_FALL_TICKS, BASE_FALL_TICKS + treeHeight * TICKS_PER_TREE_BLOCK);
+        int baseFallTicks = QuickTree.getInstance().getConfig().getInt("animation.base-fall-ticks", 10);
+        int ticksPerTreeBlock = QuickTree.getInstance().getConfig().getInt("animation.ticks-per-tree-block", 1);
+        int maxFallTicks = QuickTree.getInstance().getConfig().getInt("animation.max-fall-ticks", 60);
+
+        int animationTicks = baseFallTicks + treeHeight * ticksPerTreeBlock;
+
+        return Math.max(1, Math.min(maxFallTicks, animationTicks));
     }
 
     private Vector getRotatedCenterOffset(int direction, double angle) {
