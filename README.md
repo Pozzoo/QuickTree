@@ -32,7 +32,7 @@ QuickTree is a Minecraft plugin that transforms tree harvesting into a smooth, r
 
 ## 📋 Requirements
 
-- **Minecraft Version:** 1.20+ (Paper or compatible fork)
+- **Minecraft Version:** 1.20+
 - **Java Version:** 17 or higher
 - **Server Software:** PaperMC, Purpur, or any Paper-based server
 
