@@ -5,17 +5,17 @@ import java.util.Set;
 
 public class TrackedChunk {
 
-    private final Set<Short> blocks = new HashSet<>();
+    private final Set<Integer> blocks = new HashSet<>();
 
-    public void add(short pos) {
+    public void add(int pos) {
         blocks.add(pos);
     }
 
-    public void remove(short pos) {
+    public void remove(int pos) {
         blocks.remove(pos);
     }
 
-    public boolean contains(short pos) {
+    public boolean contains(int pos) {
         return blocks.contains(pos);
     }
 
@@ -23,7 +23,7 @@ public class TrackedChunk {
         return blocks.isEmpty();
     }
 
-    public Set<Short> getAll() {
+    public Set<Integer> getAll() {
         return blocks;
     }
 }

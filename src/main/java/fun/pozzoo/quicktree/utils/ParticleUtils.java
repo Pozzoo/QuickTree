@@ -3,15 +3,20 @@ package fun.pozzoo.quicktree.utils;
 import org.bukkit.Particle;
 
 public class ParticleUtils {
-    public static Particle getBlockParticle() {
-        Particle BLOCK_PARTICLE;
 
+    private static final Particle BLOCK_PARTICLE;
+
+    static {
+        Particle particle;
         try {
-            BLOCK_PARTICLE = Particle.valueOf("BLOCK");
+            particle = Particle.valueOf("BLOCK");
         } catch (IllegalArgumentException e) {
-            BLOCK_PARTICLE = Particle.valueOf("BLOCK_CRACK");
+            particle = Particle.valueOf("BLOCK_CRACK");
         }
-        return BLOCK_PARTICLE;
+        BLOCK_PARTICLE = particle;
     }
 
+    public static Particle getBlockParticle() {
+        return BLOCK_PARTICLE;
+    }
 }

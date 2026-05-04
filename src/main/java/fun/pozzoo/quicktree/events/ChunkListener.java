@@ -7,17 +7,20 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
 public class ChunkListener implements Listener {
+
+    private final QuickTree plugin;
+
     public ChunkListener(QuickTree plugin) {
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onChunkUnload(ChunkUnloadEvent event) {
-        QuickTree.getInstance().getStorageManager().saveChunk(event.getChunk());
+        plugin.getStorageManager().saveChunk(event.getChunk());
     }
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
-        QuickTree.getInstance().getStorageManager().loadChunk(event.getChunk());
+        plugin.getStorageManager().loadChunk(event.getChunk());
     }
 }
