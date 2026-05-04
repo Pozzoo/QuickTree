@@ -1,0 +1,14 @@
+animation:
+  # Whether leaves should be part of the falling animation (May cause performance issues).
+  # If disabled, leaves break immediately like before.
+  animate-leaves: true
+
+  # Minimum number of ticks the falling animation takes.
+  base-fall-ticks: 8
+
+  # Extra ticks added per block of tree height.
+  # Higher value = taller trees fall slower.
+  ticks-per-tree-block: 2
+
+  # Maximum animation duration, so huge trees do not animate forever.
+  max-fall-ticks: 80

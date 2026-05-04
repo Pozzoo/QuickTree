@@ -1,33 +1,52 @@
 package fun.pozzoo.quicktree.events;
 
 import fun.pozzoo.quicktree.QuickTree;
+import fun.pozzoo.quicktree.data.Tree;
+import fun.pozzoo.quicktree.utils.BlockTypeUtils;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.MainHand;
-
 
 public class BlockListener implements Listener {
 
+    private final QuickTree plugin;
+
     public BlockListener(QuickTree plugin) {
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        this.plugin = plugin;
     }
 
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        if (!(QuickTree.getInstance().getWoodManager().isWoodenLogs(event.getBlock().getType()))) return;
-        if (event.getPlayer().isSneaking()) return;
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (BlockTypeUtils.isWoodenLogs(event.getBlock().getType()) || BlockTypeUtils.isKindaLeaves(event.getBlock().getType())) plugin.getStorageManager().mark(event.getBlock());
+    }
 
-        event.setCancelled(true);
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (!BlockTypeUtils.isWoodenLogs(event.getBlock().getType())) return;
+
+        var player = event.getPlayer();
+        if (player.isSneaking()) return;
+
+        if (plugin.getStorageManager().isPlayerPlaced(event.getBlock())) {
+            plugin.getStorageManager().unmark(event.getBlock());
+            return;
+        }
 
         Location location = event.getBlock().getLocation();
 
-        QuickTree.getInstance().getWoodManager().createTree(location);
-        QuickTree.getInstance().getWoodManager().createTreeDisplay(location);
+        // If the log cluster includes player-placed blocks, do not override vanilla behavior.
+        if (!plugin.getWoodManager().createTree(location)) return;
 
-        event.getPlayer().damageItemStack(EquipmentSlot.HAND, QuickTree.getInstance().getWoodManager().getTree(location).getTreeModel().size());
-        QuickTree.getInstance().getWoodManager().destroyTree(location);
+        event.setCancelled(true);
+
+        plugin.getWoodManager().createTreeDisplay(location);
+
+        Tree tree = plugin.getWoodManager().getTree(location);
+        if (tree != null) player.damageItemStack(EquipmentSlot.HAND, tree.getTreeModel().size());
+
+        plugin.getWoodManager().destroyTree(location, player.getLocation().getDirection());
     }
 }

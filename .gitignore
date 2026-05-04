@@ -7,6 +7,7 @@
 /dataSources/
 /dataSources.local.xml
 /.idea
+*.iml
 /META-INF
 /Server
 /target
