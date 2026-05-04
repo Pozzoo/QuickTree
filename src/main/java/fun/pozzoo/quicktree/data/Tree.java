@@ -8,11 +8,13 @@ import java.util.*;
 public class Tree {
     private final LinkedList<Location> treeModel;
     private final List<BlockDisplay> treeDisplay;
+    private final List<BlockDisplay> leafDisplay;
     private final LinkedList<Location> leaves;
 
     public Tree() {
         treeModel = new LinkedList<>();
         treeDisplay = new ArrayList<>();
+        leafDisplay = new ArrayList<>();
         leaves = new LinkedList<>();
     }
 
@@ -27,6 +29,10 @@ public class Tree {
 
     public List<BlockDisplay> getTreeDisplay() {
         return treeDisplay;
+    }
+
+    public List<BlockDisplay> getLeafDisplay() {
+        return leafDisplay;
     }
 
     public LinkedList<Location> getLeaves() {

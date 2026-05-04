@@ -2,8 +2,8 @@ package fun.pozzoo.quicktree.managers;
 
 import fun.pozzoo.quicktree.QuickTree;
 import fun.pozzoo.quicktree.data.Tree;
-import fun.pozzoo.quicktree.utils.ParticleUtils;
 import fun.pozzoo.quicktree.utils.BlockTypeUtils;
+import fun.pozzoo.quicktree.utils.ParticleUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -14,7 +14,6 @@ import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-
 
 public class WoodManager {
     private static final int TERRAIN_SCAN_UP = 4;
@@ -84,16 +83,14 @@ public class WoodManager {
                 if (!BlockTypeUtils.isWoodenLogs(next.getBlock().getType())) continue;
                 if (!visited.add(next)) continue;
 
-                // Structure protection
                 if (QuickTree.getInstance().getStorageManager().isPlayerPlaced(next.getBlock())) {
-                    return new LinkedList<>(); // abort entire felling
+                    return new LinkedList<>();
                 }
 
                 logs.add(next);
                 queue.add(next);
             }
 
-            // Prevent from animating "Trees" that are 1 block tall
             if (logs.getFirst().getY() == logs.getLast().getY()) {
                 for (Location log : logs) {
                     log.getBlock().breakNaturally();
@@ -102,7 +99,7 @@ public class WoodManager {
                 break;
             }
 
-            if (logs.size() > 512) break; // safety cap
+            if (logs.size() > 512) break;
         }
 
         return logs;
@@ -113,7 +110,6 @@ public class WoodManager {
         Set<Location> visited = new HashSet<>();
         Queue<BlockDepth> queue = new ArrayDeque<>();
 
-        // Seed BFS with logs
         for (Location log : logs) {
             queue.add(new BlockDepth(log, 0));
             visited.add(log);
@@ -126,10 +122,12 @@ public class WoodManager {
 
             for (int[] d : DIRECTIONS) {
                 Location next = current.location.getBlock().getRelative(d[0], d[1], d[2]).getLocation();
+
                 if (!visited.add(next)) continue;
 
                 if (BlockTypeUtils.isLeaves(next.getBlock().getType())) {
                     Leaves data = (Leaves) next.getBlock().getBlockData();
+
                     if (data.isPersistent()) continue;
 
                     leaves.add(next);
@@ -144,7 +142,6 @@ public class WoodManager {
         return leaves;
     }
 
-
     public void createTreeDisplay(Location initialLocation) {
         Tree tree = trees.get(initialLocation);
 
@@ -158,13 +155,33 @@ public class WoodManager {
 
             tree.getTreeDisplay().add(blockDisplay);
         }
+
+        if (!shouldAnimateLeaves()) {
+            return;
+        }
+
+        for (Location location : tree.getLeaves()) {
+            BlockDisplay blockDisplay = location.getWorld().spawn(location, BlockDisplay.class);
+            blockDisplay.setBlock(location.getBlock().getBlockData());
+
+            tree.getLeafDisplay().add(blockDisplay);
+        }
     }
 
     private void animateTree(int direction, Location location, Vector playerDirection) {
-        explodeLeaves(location);
+        if (shouldAnimateLeaves()) {
+            removeRealLeaves(location);
+        } else {
+            explodeLeaves(location);
+        }
 
-        int playerDirectionInt = ((Math.round(playerDirection.getX())) == 0) ? (Math.round(playerDirection.getZ()) == -1 ? 0 : 1) : (Math.round(playerDirection.getX()) == 1 ? 2 : 3);
-        int finalDirection = (direction % 2 == 0) ? (direction + 1 == playerDirectionInt ? (direction - 1) & 3 : direction) : (direction - 1 == playerDirectionInt ? (direction + 1) & 3 : direction);
+        int playerDirectionInt = ((Math.round(playerDirection.getX())) == 0)
+                ? (Math.round(playerDirection.getZ()) == -1 ? 0 : 1)
+                : (Math.round(playerDirection.getX()) == 1 ? 2 : 3);
+
+        int finalDirection = (direction % 2 == 0)
+                ? (direction + 1 == playerDirectionInt ? (direction - 1) & 3 : direction)
+                : (direction - 1 == playerDirectionInt ? (direction + 1) & 3 : direction);
 
         Tree tree = trees.get(location);
 
@@ -189,7 +206,12 @@ public class WoodManager {
                 double progress = Math.min(1.0, (double) (iterations + 1) / maxIterations);
                 double angle = Math.toRadians(90.0 * progress);
 
-                applyTerrainFollowingTreePose(tree, location, finalDirection, angle, progress);
+                applyTerrainFollowingTrunkPose(tree, location, finalDirection, angle, progress);
+
+                if (shouldAnimateLeaves()) {
+                    applyRigidCanopyPose(tree, location, finalDirection, angle);
+                    breakCollidingLeaves(tree);
+                }
 
                 iterations++;
 
@@ -201,7 +223,7 @@ public class WoodManager {
         }.runTaskTimer(QuickTree.getInstance(), 0, 1);
     }
 
-    private void applyTerrainFollowingTreePose(Tree tree, Location pivot, int direction, double angle, double progress) {
+    private void applyTerrainFollowingTrunkPose(Tree tree, Location pivot, int direction, double angle, double progress) {
         double sin = Math.sin(angle);
         double cos = Math.cos(angle);
         Vector rotatedCenterOffset = getRotatedCenterOffset(direction, angle);
@@ -275,6 +297,70 @@ public class WoodManager {
         }
     }
 
+    private void applyRigidCanopyPose(Tree tree, Location pivot, int direction, double angle) {
+        double sin = Math.sin(angle);
+        double cos = Math.cos(angle);
+        Vector rotatedCenterOffset = getRotatedCenterOffset(direction, angle);
+
+        double pivotCenterX = pivot.getX() + 0.5;
+        double pivotCenterY = pivot.getY() + 0.5;
+        double pivotCenterZ = pivot.getZ() + 0.5;
+
+        for (BlockDisplay blockDisplay : tree.getLeafDisplay()) {
+            Location baseLocation = blockDisplay.getLocation();
+            Transformation transformation = blockDisplay.getTransformation();
+
+            double baseCenterX = baseLocation.getX() + 0.5;
+            double baseCenterY = baseLocation.getY() + 0.5;
+            double baseCenterZ = baseLocation.getZ() + 0.5;
+
+            double offsetX = baseCenterX - pivotCenterX;
+            double offsetY = baseCenterY - pivotCenterY;
+            double offsetZ = baseCenterZ - pivotCenterZ;
+
+            double rotatedCenterX = baseCenterX;
+            double rotatedCenterY = baseCenterY;
+            double rotatedCenterZ = baseCenterZ;
+
+            switch (direction) {
+                case 0 -> { // North
+                    rotatedCenterX = pivotCenterX + offsetX;
+                    rotatedCenterY = pivotCenterY + offsetY * cos + offsetZ * sin;
+                    rotatedCenterZ = pivotCenterZ - offsetY * sin + offsetZ * cos;
+                    transformation.getLeftRotation().identity().rotateX((float) -angle);
+                }
+                case 1 -> { // South
+                    rotatedCenterX = pivotCenterX + offsetX;
+                    rotatedCenterY = pivotCenterY + offsetY * cos - offsetZ * sin;
+                    rotatedCenterZ = pivotCenterZ + offsetY * sin + offsetZ * cos;
+                    transformation.getLeftRotation().identity().rotateX((float) angle);
+                }
+                case 2 -> { // East
+                    rotatedCenterX = pivotCenterX + offsetX * cos + offsetY * sin;
+                    rotatedCenterY = pivotCenterY - offsetX * sin + offsetY * cos;
+                    rotatedCenterZ = pivotCenterZ + offsetZ;
+                    transformation.getLeftRotation().identity().rotateZ((float) -angle);
+                }
+                case 3 -> { // West
+                    rotatedCenterX = pivotCenterX + offsetX * cos - offsetY * sin;
+                    rotatedCenterY = pivotCenterY + offsetX * sin + offsetY * cos;
+                    rotatedCenterZ = pivotCenterZ + offsetZ;
+                    transformation.getLeftRotation().identity().rotateZ((float) angle);
+                }
+            }
+
+            double targetX = rotatedCenterX - rotatedCenterOffset.getX();
+            double targetY = rotatedCenterY - rotatedCenterOffset.getY();
+            double targetZ = rotatedCenterZ - rotatedCenterOffset.getZ();
+
+            transformation.getTranslation().x = (float) (targetX - baseLocation.getX());
+            transformation.getTranslation().y = (float) (targetY - baseLocation.getY());
+            transformation.getTranslation().z = (float) (targetZ - baseLocation.getZ());
+
+            blockDisplay.setTransformation(transformation);
+        }
+    }
+
     private double getLowestRotatedBlockCornerY(int direction, double angle) {
         double rotationAngle = switch (direction) {
             case 0, 2 -> -angle;
@@ -286,8 +372,8 @@ public class WoodManager {
         double cos = Math.cos(rotationAngle);
 
         return switch (direction) {
-            case 0, 1 -> Math.min(0.0, cos) + Math.min(0.0, -sin); // X rotation: y' = y*cos - z*sin
-            case 2, 3 -> Math.min(0.0, sin) + Math.min(0.0, cos);  // Z rotation: y' = x*sin + y*cos
+            case 0, 1 -> Math.min(0.0, cos) + Math.min(0.0, -sin);
+            case 2, 3 -> Math.min(0.0, sin) + Math.min(0.0, cos);
             default -> 0.0;
         };
     }
@@ -309,12 +395,7 @@ public class WoodManager {
         return terrainY;
     }
 
-    private double getTerrainSurfaceY(
-            Location fallbackLocation,
-            int blockX,
-            int blockZ,
-            double currentY
-    ) {
+    private double getTerrainSurfaceY(Location fallbackLocation, int blockX, int blockZ, double currentY) {
         int maxY = Math.min(
                 fallbackLocation.getWorld().getMaxHeight() - 1,
                 (int) Math.ceil(currentY) + TERRAIN_SCAN_UP
@@ -359,22 +440,17 @@ public class WoodManager {
                 }
 
                 for (BlockDisplay blockDisplay : tree.getTreeDisplay()) {
-                    Location particleLocation = blockDisplay.getLocation().clone()
-                            .add(Vector.fromJOML(blockDisplay.getTransformation().getTranslation()));
-
+                    spawnBreakParticles(blockDisplay, 20, 0, 1, 0);
                     blockDisplay.remove();
-                    blockDisplay.getWorld().spawnParticle(
-                            ParticleUtils.getBlockParticle(),
-                            particleLocation,
-                            20,
-                            0,
-                            1,
-                            0,
-                            blockDisplay.getBlock().getMaterial().createBlockData()
-                    );
+                }
+
+                for (BlockDisplay blockDisplay : tree.getLeafDisplay()) {
+                    spawnBreakParticles(blockDisplay, 12, 0.25, 0.25, 0.25);
+                    blockDisplay.remove();
                 }
 
                 tree.getTreeDisplay().clear();
+                tree.getLeafDisplay().clear();
             }
         }.runTaskLater(QuickTree.getInstance(), 20);
     }
@@ -398,14 +474,87 @@ public class WoodManager {
         }
     }
 
+    private void removeRealLeaves(Location location) {
+        Tree tree = trees.get(location);
+
+        if (tree == null) {
+            return;
+        }
+
+        for (Location leaf : tree.getLeaves()) {
+            leaf.getBlock().setType(Material.AIR, false);
+        }
+    }
+
+    private void breakCollidingLeaves(Tree tree) {
+        Iterator<BlockDisplay> iterator = tree.getLeafDisplay().iterator();
+
+        while (iterator.hasNext()) {
+            BlockDisplay blockDisplay = iterator.next();
+
+            Location displayLocation = getDisplayWorldLocation(blockDisplay);
+            Location lowerContactLocation = displayLocation.clone().subtract(0.0, 0.25, 0.0);
+
+            Material collidedMaterial = displayLocation.getBlock().getType();
+            Material lowerMaterial = lowerContactLocation.getBlock().getType();
+
+            if (!isTerrainBlock(collidedMaterial) && !isTerrainBlock(lowerMaterial)) {
+                continue;
+            }
+
+            blockDisplay.getWorld().spawnParticle(
+                    ParticleUtils.getBlockParticle(),
+                    displayLocation,
+                    12,
+                    0.25,
+                    0.25,
+                    0.25,
+                    blockDisplay.getBlock().getMaterial().createBlockData()
+            );
+
+            blockDisplay.getWorld().playSound(
+                    displayLocation,
+                    blockDisplay.getBlock().getSoundGroup().getBreakSound(),
+                    0.6f,
+                    1.1f
+            );
+
+            blockDisplay.remove();
+            iterator.remove();
+        }
+    }
+
+    private void spawnBreakParticles(BlockDisplay blockDisplay, int count, double offsetX, double offsetY, double offsetZ) {
+        Location particleLocation = getDisplayWorldLocation(blockDisplay);
+
+        blockDisplay.getWorld().spawnParticle(
+                ParticleUtils.getBlockParticle(),
+                particleLocation,
+                count,
+                offsetX,
+                offsetY,
+                offsetZ,
+                blockDisplay.getBlock().getMaterial().createBlockData()
+        );
+    }
+
+    private Location getDisplayWorldLocation(BlockDisplay blockDisplay) {
+        return blockDisplay.getLocation().clone()
+                .add(Vector.fromJOML(blockDisplay.getTransformation().getTranslation()));
+    }
+
+    private boolean shouldAnimateLeaves() {
+        return QuickTree.getInstance().getConfig().getBoolean("animation.animate-leaves", true);
+    }
+
     public Tree getTree(Location location) {
         return trees.get(location);
     }
 
     private double getSideShapeOffset(Location blockLocation, Location pivot, int direction) {
         return switch (direction) {
-            case 0, 1 -> blockLocation.getX() - pivot.getX(); // Falling north/south: preserve east-west width
-            case 2, 3 -> blockLocation.getZ() - pivot.getZ(); // Falling east/west: preserve north-south width
+            case 0, 1 -> blockLocation.getX() - pivot.getX();
+            case 2, 3 -> blockLocation.getZ() - pivot.getZ();
             default -> 0.0;
         };
     }
@@ -446,10 +595,10 @@ public class WoodManager {
 
     private Vector getRotatedCenterOffset(int direction, double angle) {
         return switch (direction) {
-            case 0 -> rotateAroundX(-angle); // North
-            case 1 -> rotateAroundX(angle);  // South
-            case 2 -> rotateAroundZ(-angle); // East
-            case 3 -> rotateAroundZ(angle);  // West
+            case 0 -> rotateAroundX(-angle);
+            case 1 -> rotateAroundX(angle);
+            case 2 -> rotateAroundZ(-angle);
+            case 3 -> rotateAroundZ(angle);
             default -> new Vector(0.5, 0.5, 0.5);
         };
     }
